@@ -28,7 +28,12 @@ def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
     return yoko, tate
 
 
-def game_over(screen: pg.Surface) -> tuple[int, int]:
+def game_over(screen: pg.Surface) -> None:
+    """
+    gameover画面を表示する関数
+    引数: screen
+    戻り値: なし
+    """
     bl_img = pg.Surface((WIDTH, HEIGHT)) 
     pg.draw.rect(bl_img, (0, 0, 0), pg.Rect(0, 0, WIDTH, HEIGHT))
     bl_img.set_alpha(128)
@@ -59,12 +64,39 @@ def init_bb_imgs() -> tuple[list[pg.Surface], list[int]]:
         bb_imgs.append(bb_img) 
     return bb_imgs, accs
 
+
+def generate_kk_images(base_img: pg.Surface) -> dict[tuple[int, int], pg.Surface]:
+    """
+    押下キーに対応する移動量タプルをキーに、rotozoomしたSurfaceを値とする辞書を生成
+    """
+    directions = {
+        (0, 0): 0,      # 静止
+        (0, -1): -90,   # 上
+        (0, 1): 90,     # 下
+        (-1, 0): 180,   # 左
+        (1, 0): 0,      # 右
+        (-1, -1): -135, # 左上
+        (-1, 1): 135,   # 左下
+        (1, -1): -45,   # 右上
+        (1, 1): 45,     # 右下
+    }
+
+    images = {}
+    for (dx, dy), angle in directions.items():
+        rotated_img = pg.transform.rotozoom(base_img, angle, 1.0)
+        images[(dx, dy)] = rotated_img
+    return images
+
+
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("fig/pg_bg.jpg")    
-    kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
-    kk_rct = kk_img.get_rect()
+    kk_base_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
+
+    # 移動量と回転済み画像の辞書を作成
+    kk_images = generate_kk_images(kk_base_img)
+    kk_rct = kk_base_img.get_rect()
     kk_rct.center = 300, 200
 
     # 爆弾画像リストと加速度リストを初期化
@@ -97,6 +129,12 @@ def main():
             if key_lst[key]:
                 sum_mv[0] += tpl[0]
                 sum_mv[1] += tpl[1]
+        
+        # 移動量に対応する方向画像を取得
+        direction = (sum_mv[0] // abs(sum_mv[0]) if sum_mv[0] != 0 else 0,
+                     sum_mv[1] // abs(sum_mv[1]) if sum_mv[1] != 0 else 0)
+        kk_img = kk_images.get(direction, kk_images[(0, 0)])  
+        
         kk_rct.move_ip(sum_mv)
         if check_bound(kk_rct) != (True, True):
             kk_rct.move_ip(-sum_mv[0], -sum_mv[1])
