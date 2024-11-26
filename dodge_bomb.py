@@ -1,9 +1,8 @@
 import os
 import random
 import sys
-
 import pygame as pg
-
+import time
 
 WIDTH, HEIGHT = 1100, 650
 DELTA = {
@@ -29,6 +28,29 @@ def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
     return yoko, tate
 
 
+"""
+gameover画面を表示する関数
+引数  screen
+戻り値  なし
+"""
+def game_over(screen: pg.Surface) -> tuple[int, int]:  # Corrected syntax
+    bl_img = pg.Surface((WIDTH, HEIGHT)) 
+    pg.draw.rect(bl_img, (0, 0, 0), pg.Rect(0, 0, WIDTH, HEIGHT))
+    bl_img.set_alpha(128)
+    go_font = pg.font.Font(None, 80)
+    txt = go_font.render("Game_Over", True, (255, 255, 255))
+    cry_img = pg.image.load("fig/8.png")
+    cry_rct = cry_img.get_rect()
+    cry_rct2 = cry_img.get_rect()
+    cry_rct.topleft = (WIDTH - 360) / 2, HEIGHT / 2
+    cry_rct2.topleft = (WIDTH + 380) / 2, HEIGHT / 2
+    bl_rct = bl_img.get_rect()
+    bl_rct.topleft = 0, 0
+    screen.blit(bl_img, bl_rct)
+    screen.blit(txt, [(WIDTH - 270) / 2, HEIGHT / 2])
+    screen.blit(cry_img, cry_rct)
+    screen.blit(cry_img, cry_rct2)
+
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -49,9 +71,16 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT: 
                 return
-        if kk_rct.colliderect(bb_rct):
+            
+
+       
+        if kk_rct.colliderect(bb_rct):  # こうかとんと爆弾が重なっていたら
             print("ゲームオーバー")
+            game_over(screen)  # ゲームオーバー画面表示
+            pg.display.update()
+            time.sleep(5)
             return  # ゲームオーバー
+        
         screen.blit(bg_img, [0, 0]) 
 
         key_lst = pg.key.get_pressed()
