@@ -143,7 +143,6 @@ def main():
         level = min(tmr // 500, 9)  # 爆弾レベルを0から9の範囲で制限
         vx = 5 * saccs[level] * (1 if vx > 0 else -1)  # 現在の加速度に基づいて速度更新
         vy = 5 * saccs[level] * (1 if vy > 0 else -1)
-
         # 爆弾画像の切り替え
         bb_img = bb_imgs[level]
         bb_rct = bb_img.get_rect(center=bb_rct.center)
