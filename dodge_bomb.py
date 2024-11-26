@@ -1,8 +1,8 @@
 import os
 import random
 import sys
-import pygame as pg
 import time
+import pygame as pg
 
 WIDTH, HEIGHT = 1100, 650
 DELTA = {
@@ -28,12 +28,7 @@ def check_bound(rct: pg.Rect) -> tuple[bool, bool]:
     return yoko, tate
 
 
-"""
-gameover画面を表示する関数
-引数  screen
-戻り値  なし
-"""
-def game_over(screen: pg.Surface) -> tuple[int, int]:  # Corrected syntax
+def game_over(screen: pg.Surface) -> tuple[int, int]:
     bl_img = pg.Surface((WIDTH, HEIGHT)) 
     pg.draw.rect(bl_img, (0, 0, 0), pg.Rect(0, 0, WIDTH, HEIGHT))
     bl_img.set_alpha(128)
@@ -51,6 +46,19 @@ def game_over(screen: pg.Surface) -> tuple[int, int]:  # Corrected syntax
     screen.blit(cry_img, cry_rct)
     screen.blit(cry_img, cry_rct2)
 
+
+def init_bb_imgs() -> tuple[list[pg.Surface], list[int]]:
+    """
+    爆弾の画像リストと加速度リストを返す
+    """
+    accs = [a for a in range(1, 11)] 
+    bb_imgs = []  
+    for r in range(1, 11): 
+        bb_img = pg.Surface((20 * r, 20 * r), pg.SRCALPHA)
+        pg.draw.circle(bb_img, (255, 0, 0, 255), (10 * r, 10 * r), 10 * r)
+        bb_imgs.append(bb_img) 
+    return bb_imgs, accs
+
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -58,22 +66,22 @@ def main():
     kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
     kk_rct = kk_img.get_rect()
     kk_rct.center = 300, 200
-    bb_img = pg.Surface((20, 20))  # 爆弾用の空Surface
-    pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)  # 爆弾円を描く
-    bb_img.set_colorkey((0, 0, 0))  # 四隅の黒を透過させる
-    bb_rct = bb_img.get_rect()  # 爆弾Rectの抽出
+
+    # 爆弾画像リストと加速度リストを初期化
+    bb_imgs, saccs = init_bb_imgs()
+    bb_img = bb_imgs[0]  # 初期状態の爆弾画像
+    bb_rct = bb_img.get_rect()
     bb_rct.centerx = random.randint(0, WIDTH)
     bb_rct.centery = random.randint(0, HEIGHT)
-    vx, vy = +5, +5  # 爆弾速度ベクトル
+
+    vx, vy = +5, +5  # 初期速度ベクトル
     clock = pg.time.Clock()
     tmr = 0
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT: 
                 return
-            
-
-       
+        
         if kk_rct.colliderect(bb_rct):  # こうかとんと爆弾が重なっていたら
             print("ゲームオーバー")
             game_over(screen)  # ゲームオーバー画面表示
@@ -86,22 +94,33 @@ def main():
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0]
         for key, tpl in DELTA.items():
-            if key_lst[key] == True:
+            if key_lst[key]:
                 sum_mv[0] += tpl[0]
                 sum_mv[1] += tpl[1]
         kk_rct.move_ip(sum_mv)
-        # こうかとんが画面外なら，元の場所に戻す
         if check_bound(kk_rct) != (True, True):
             kk_rct.move_ip(-sum_mv[0], -sum_mv[1])
         screen.blit(kk_img, kk_rct)
-        bb_rct.move_ip(vx, vy)  # 爆弾動く
+
+        # タイマーに応じた速度更新
+        level = min(tmr // 500, 9)  # 爆弾レベルを0から9の範囲で制限
+        vx = 5 * saccs[level] * (1 if vx > 0 else -1)  # 現在の加速度に基づいて速度更新
+        vy = 5 * saccs[level] * (1 if vy > 0 else -1)
+
+        # 爆弾画像の切り替え
+        bb_img = bb_imgs[level]
+        bb_rct = bb_img.get_rect(center=bb_rct.center)
+
+        bb_rct.move_ip(vx, vy)
         yoko, tate = check_bound(bb_rct)
-        if not yoko:  # 横にはみ出てる
+        if not yoko:
             vx *= -1
-        if not tate:  # 縦にはみ出てる
+        if not tate:
             vy *= -1
+
         screen.blit(bb_img, bb_rct)
         pg.display.update()
+
         tmr += 1
         clock.tick(50)
 
