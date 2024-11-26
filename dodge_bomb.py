@@ -67,7 +67,7 @@ def init_bb_imgs() -> tuple[list[pg.Surface], list[int]]:
 
 def generate_kk_images(base_img: pg.Surface) -> dict[tuple[int, int], pg.Surface]:
     """
-    押下キーに対応する移動量タプルをキーに、rotozoomしたSurfaceを値とする辞書を生成
+    押下キーに対応する移動量タプルをキーに、rotozoomしたSurfaceを値とする辞書
     """
     directions = {
         (0, 0): 0,      # 静止
@@ -134,7 +134,6 @@ def main():
         direction = (sum_mv[0] // abs(sum_mv[0]) if sum_mv[0] != 0 else 0,
                      sum_mv[1] // abs(sum_mv[1]) if sum_mv[1] != 0 else 0)
         kk_img = kk_images.get(direction, kk_images[(0, 0)])  
-        
         kk_rct.move_ip(sum_mv)
         if check_bound(kk_rct) != (True, True):
             kk_rct.move_ip(-sum_mv[0], -sum_mv[1])
